@@ -31,8 +31,7 @@ mod tests {
 
     #[test]
     fn example_1_is_7() {
-        let input = vec![199, 200, 208, 210, 200, 207, 240, 269, 260, 263];
-        let result = part_1(input);
+        let result = part_1(example());
         assert_eq!(result, 7);
     }
 
@@ -45,8 +44,7 @@ mod tests {
 
     #[test]
     fn example_2_is_5() {
-        let input = vec![199, 200, 208, 210, 200, 207, 240, 269, 260, 263];
-        let result = part_2(input);
+        let result = part_2(example());
         assert_eq!(result, 5);
     }
 
@@ -55,5 +53,9 @@ mod tests {
         let input = parse_file("src/day01/input.txt");
         let result = part_2(input);
         assert_eq!(result, 1781);
+    }
+
+    fn example() -> Vec<u16> {
+        vec![199, 200, 208, 210, 200, 207, 240, 269, 260, 263]
     }
 }

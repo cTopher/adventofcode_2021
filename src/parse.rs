@@ -9,3 +9,9 @@ pub fn parse_file<E: fmt::Debug, F: FromStr<Err = E>>(filename: &str) -> impl It
         .lines()
         .map(|line| line.unwrap().parse().unwrap())
 }
+
+pub fn parse_str<E: fmt::Debug, F: FromStr<Err = E>>(
+    input: &'static str,
+) -> impl Iterator<Item = F> {
+    input.lines().map(|line| line.parse().unwrap())
+}
