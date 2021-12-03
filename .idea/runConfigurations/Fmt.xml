@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Clippy" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="command" value="clippy --all-targets --  &#10;-W clippy::pedantic &#10;-W clippy::nursery&#10;-A clippy::missing-panics-doc&#10;-A clippy::module-name-repetitions&#10;-A clippy::must-use-candidate" />
+  <configuration default="false" name="Fmt" type="CargoCommandRunConfiguration" factoryName="Cargo Command" nameIsGenerated="true">
+    <option name="command" value="fmt --all" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <option name="channel" value="DEFAULT" />
     <option name="requiredFeatures" value="true" />
