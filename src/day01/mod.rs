@@ -25,7 +25,7 @@ fn measure_window<I: IntoIterator<Item = u16>>(input: I, window_size: usize) -> 
 
 #[cfg(test)]
 mod tests {
-    use crate::parse_file;
+    use crate::parse_file_lines;
 
     use super::*;
 
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn part_1_works() {
-        let input = parse_file("src/day01/input.txt");
+        let input = parse_file_lines("src/day01/input.txt");
         let result = part_1(input);
         assert_eq!(result, 1752);
     }
@@ -50,7 +50,7 @@ mod tests {
 
     #[test]
     fn part_2_works() {
-        let input = parse_file("src/day01/input.txt");
+        let input = parse_file_lines("src/day01/input.txt");
         let result = part_2(input);
         assert_eq!(result, 1781);
     }

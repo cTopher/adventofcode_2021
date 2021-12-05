@@ -51,8 +51,8 @@ const fn xnor(a: bool, b: bool) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::parse_file;
-    use crate::parse_str;
+    use crate::parse_file_lines;
+    use crate::parse_str_lines;
 
     use super::*;
 
@@ -72,28 +72,28 @@ mod tests {
 
     #[test]
     fn example_power_consumption_is_198() {
-        let input = parse_str(EXAMPLE);
+        let input = parse_str_lines(EXAMPLE);
         let result = power_consumption(input);
         assert_eq!(result, 198);
     }
 
     #[test]
     fn part_1_works() {
-        let input = parse_file("src/day03/input.txt");
+        let input = parse_file_lines("src/day03/input.txt");
         let result = power_consumption(input);
         assert_eq!(result, 4_191_876);
     }
 
     #[test]
     fn example_life_support_rating_is_230() {
-        let input = parse_str(EXAMPLE).collect();
+        let input = parse_str_lines(EXAMPLE).collect();
         let result = life_support_rating(input);
         assert_eq!(result, 230);
     }
 
     #[test]
     fn part_2_works() {
-        let input = parse_file("src/day03/input.txt").collect();
+        let input = parse_file_lines("src/day03/input.txt").collect();
         let result = life_support_rating(input);
         assert_eq!(result, 3_414_905);
     }
