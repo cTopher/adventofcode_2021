@@ -11,12 +11,15 @@ impl FromStr for School {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let mut fish = [0;9];
+        let mut fish = [0; 9];
         for timer in input.split(',') {
             let timer: usize = timer.parse().unwrap();
             fish[timer] += 1;
         }
-        Ok(Self { fish, zero_index: 0 })
+        Ok(Self {
+            fish,
+            zero_index: 0,
+        })
     }
 }
 
@@ -24,7 +27,7 @@ impl School {
     fn tick(&mut self) {
         let new = self.fish[self.zero_index];
         self.zero_index = (self.zero_index + 1) % 9;
-        self.fish[(self.zero_index+6)%9] += new;
+        self.fish[(self.zero_index + 6) % 9] += new;
     }
 
     fn size(&self) -> u64 {
