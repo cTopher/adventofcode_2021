@@ -1,44 +1,45 @@
-use std::collections::VecDeque;
 use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub struct School {
-    fish: VecDeque<usize>,
+    fish: [u64; 9],
+    // index of the fish in the array that have timer=0
+    zero_index: usize,
 }
 
 impl FromStr for School {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let mut fish = VecDeque::from([0; 9]);
+        let mut fish = [0;9];
         for timer in input.split(',') {
             let timer: usize = timer.parse().unwrap();
             fish[timer] += 1;
         }
-        Ok(Self { fish })
+        Ok(Self { fish, zero_index: 0 })
     }
 }
 
 impl School {
     fn tick(&mut self) {
-        let spawn = self.fish.pop_front().unwrap();
-        self.fish.push_back(spawn);
-        self.fish[6] += spawn;
+        let new = self.fish[self.zero_index];
+        self.zero_index = (self.zero_index + 1) % 9;
+        self.fish[(self.zero_index+6)%9] += new;
     }
 
-    fn size(&self) -> usize {
+    fn size(&self) -> u64 {
         self.fish.iter().sum()
     }
 }
 
-pub fn part_1(mut school: School) -> usize {
+pub fn part_1(mut school: School) -> u64 {
     for _ in 0..80 {
         school.tick();
     }
     school.size()
 }
 
-pub fn part_2(mut school: School) -> usize {
+pub fn part_2(mut school: School) -> u64 {
     for _ in 0..256 {
         school.tick();
     }
