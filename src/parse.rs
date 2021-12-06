@@ -4,7 +4,11 @@ use std::str::FromStr;
 use std::{fmt, fs};
 
 pub fn parse_file<E: fmt::Debug, F: FromStr<Err = E>>(filename: &str) -> F {
-    fs::read_to_string(filename).unwrap().parse().unwrap()
+    fs::read_to_string(filename)
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap()
 }
 
 pub fn parse_file_lines<E: fmt::Debug, F: FromStr<Err = E>>(
