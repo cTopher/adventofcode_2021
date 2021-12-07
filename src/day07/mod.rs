@@ -16,12 +16,9 @@ impl Crabs {
         }
     }
 
-    fn min(&self) -> u32 {
-        *self.heights.iter().min().unwrap()
-    }
-
-    fn max(&self) -> u32 {
-        *self.heights.iter().max().unwrap()
+    #[allow(clippy::cast_precision_loss)]
+    fn avg(&self) -> f32 {
+        self.heights.iter().sum::<u32>() as f32 / self.heights.len() as f32
     }
 
     fn total_align_distance(&self, align_height: u32) -> u32 {
@@ -67,21 +64,15 @@ pub fn part_1(mut crabs: Crabs) -> u32 {
     crabs.total_align_distance(median)
 }
 
-/// really stupid implementation because I was lazy
-/// a proper solution could be to use regression maybe?
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn part_2(crabs: &Crabs) -> u32 {
-    let guess = (crabs.max() - crabs.min()) / 2;
-    let mut cost = u32::MAX;
-    for height in (0..guess).rev() {
-        let new_cost = crabs.align_cost(height);
-        println!("{} -> {}", height, new_cost);
-        if new_cost <= cost {
-            cost = new_cost;
-        } else {
-            break;
-        }
-    }
-    cost
+    let min = (crabs.avg() - 0.5).ceil() as u32;
+    let max = (crabs.avg() + 0.5).floor() as u32;
+    println!("min: {}, max: {}", min, max);
+    (min..=max)
+        .map(|height| crabs.align_cost(height))
+        .min()
+        .unwrap()
 }
 
 #[cfg(test)]
