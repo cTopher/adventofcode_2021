@@ -68,9 +68,10 @@ pub fn part_1(mut crabs: Crabs) -> u32 {
 }
 
 /// really stupid implementation because I was lazy
+/// a proper solution could be to use regression maybe?
 pub fn part_2(crabs: &Crabs) -> u32 {
     let guess = (crabs.max() - crabs.min()) / 2;
-    let mut cost = u32::max_value();
+    let mut cost = u32::MAX;
     for height in (0..guess).rev() {
         let new_cost = crabs.align_cost(height);
         println!("{} -> {}", height, new_cost);
