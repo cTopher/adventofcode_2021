@@ -66,11 +66,13 @@ pub fn part_1(mut crabs: Crabs) -> u32 {
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn part_2(crabs: &Crabs) -> u32 {
-    let min = (crabs.avg() - 0.5).ceil() as u32;
-    let max = (crabs.avg() + 0.5).floor() as u32;
-    println!("min: {}, max: {}", min, max);
+    let avg = crabs.avg();
+    let min = avg.floor() as u32;
+    let max = avg.ceil() as u32;
+    println!("avg: {}, min: {}, max: {}", avg, min, max);
     (min..=max)
         .map(|height| crabs.align_cost(height))
+        .inspect(|cost| println!("cost: {}", cost))
         .min()
         .unwrap()
 }
