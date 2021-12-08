@@ -78,7 +78,7 @@ impl FromStr for Board {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let row = |input: &str| -> [Cell; 5] {
-            let mut numbers = input.split(' ').filter(|s| !s.is_empty());
+            let mut numbers = input.split_whitespace();
             arr_5!(numbers.next().unwrap().parse().unwrap())
         };
         let mut lines = input.lines();

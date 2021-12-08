@@ -32,7 +32,8 @@ mod tests {
         forward 8\n\
         up 3\n\
         down 8\n\
-        forward 2";
+        forward 2\
+    ";
 
     #[test]
     fn example_1_produces_150() {

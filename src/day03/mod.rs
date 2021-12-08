@@ -68,7 +68,8 @@ mod tests {
         10000\n\
         11001\n\
         00010\n\
-        01010";
+        01010\
+    ";
 
     #[test]
     fn example_power_consumption_is_198() {
