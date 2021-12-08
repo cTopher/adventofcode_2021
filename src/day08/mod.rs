@@ -73,10 +73,7 @@ impl Entry {
 pub fn part_1<I: Iterator<Item = Entry>>(entries: I) -> usize {
     entries
         .flat_map(|entry| entry.output)
-        .filter(|pattern| {
-            let len = pattern.segments.len();
-            len == 2 || len == 4 || len == 3 || len == 7
-        })
+        .filter(|pattern| matches!(pattern.len(), 2 | 3 | 4 | 7))
         .count()
 }
 
