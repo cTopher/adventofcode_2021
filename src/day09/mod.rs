@@ -19,41 +19,43 @@ pub struct Position {
     y: usize,
 }
 
+impl Position {
+    pub const fn new(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+}
+
 impl<'a> Entry<'a> {
+    pub const fn x(&self) -> usize {
+        self.position.x
+    }
+
+    pub const fn y(&self) -> usize {
+        self.position.y
+    }
+
     pub fn up(&self) -> Option<Self> {
-        if self.position.y == 0 {
+        if self.y() == 0 {
             None
         } else {
-            self.map.entry(Position {
-                x: self.position.x,
-                y: self.position.y - 1,
-            })
+            self.map.entry(Position::new(self.x(), self.y() - 1))
         }
     }
 
     pub fn down(&self) -> Option<Self> {
-        self.map.entry(Position {
-            x: self.position.x,
-            y: self.position.y + 1,
-        })
+        self.map.entry(Position::new(self.x(), self.y() + 1))
     }
 
     pub fn left(&self) -> Option<Self> {
-        if self.position.x == 0 {
+        if self.x() == 0 {
             None
         } else {
-            self.map.entry(Position {
-                x: self.position.x - 1,
-                y: self.position.y,
-            })
+            self.map.entry(Position::new(self.x() - 1, self.y()))
         }
     }
 
     pub fn right(&self) -> Option<Self> {
-        self.map.entry(Position {
-            x: self.position.x + 1,
-            y: self.position.y,
-        })
+        self.map.entry(Position::new(self.x() + 1, self.y()))
     }
 
     pub fn neighbours(&self) -> Vec<Self> {
