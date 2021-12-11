@@ -15,7 +15,5 @@ fn day_11(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_11);
+criterion_group!(benches, day_6, day_11);
 criterion_main!(benches);
-
-//[476.12 us]

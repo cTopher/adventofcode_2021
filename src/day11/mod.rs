@@ -45,6 +45,10 @@ impl Cavern {
                 to_tick.extend(self.neighbours(position));
             }
         }
+        self.reset_flashes()
+    }
+
+    fn reset_flashes(&mut self) -> usize {
         self.octopuses
             .iter_mut()
             .flat_map(move |row| row.iter_mut())
