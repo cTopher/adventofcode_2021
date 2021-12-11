@@ -1,5 +1,4 @@
 use std::cmp::min;
-use std::collections::HashSet;
 use std::str::FromStr;
 
 #[derive(Default, Clone, Debug)]
@@ -40,19 +39,23 @@ impl Cavern {
 
     fn tick(&mut self) -> usize {
         let mut to_tick: Vec<Position> = self.positions().collect();
-        let mut flashed: HashSet<Position> = HashSet::new();
         while let Some(position @ (x, y)) = to_tick.pop() {
             self.octopuses[x][y] += 1;
             if self.octopuses[x][y] == 10 {
                 to_tick.extend(self.neighbours(position));
-                flashed.insert(position);
             }
         }
-        let number_of_flashes = flashed.len();
-        for (x, y) in flashed {
-            self.octopuses[x][y] = 0;
-        }
-        number_of_flashes
+        self.octopuses
+            .iter_mut()
+            .flat_map(move |row| row.iter_mut())
+            .fold(0, |count, energy| {
+                if *energy >= 10 {
+                    *energy = 0;
+                    count + 1
+                } else {
+                    count
+                }
+            })
     }
 }
 
