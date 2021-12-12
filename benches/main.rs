@@ -22,6 +22,5 @@ fn day_12(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_12);
+criterion_group!(benches, day_6, day_11, day_12);
 criterion_main!(benches);
-// [239.14 ms 239.61 ms 240.13 ms]

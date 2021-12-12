@@ -21,21 +21,21 @@ impl CaveSystem {
         }
     }
 
-    fn paths(&self, may_revisit: bool) -> Vec<Path> {
+    fn count_paths(&self, may_revisit: bool) -> usize {
         let mut paths = vec![Path::new(may_revisit)];
-        let mut results = Vec::new();
+        let mut result = 0;
         while let Some(path) = paths.pop() {
-            for cave in self.connections.get(path.last()).unwrap() {
+            for cave in self.connections.get(path.last).unwrap() {
                 if let Some(new) = path.push(cave) {
                     if new.is_complete() {
-                        results.push(new);
+                        result += 1;
                     } else {
                         paths.push(new);
                     }
                 }
             }
         }
-        results
+        result
     }
 }
 
@@ -48,30 +48,26 @@ pub enum Cave {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct Path {
-    small_caves: Vec<String>,
+pub struct Path<'a> {
+    small_caves: Vec<&'a str>,
     may_revisit: bool,
-    last: Cave,
+    last: &'a Cave,
 }
 
-impl Path {
+impl<'a> Path<'a> {
     const fn new(may_revisit: bool) -> Self {
         Self {
             small_caves: Vec::new(),
             may_revisit,
-            last: Cave::Start,
+            last: &Cave::Start,
         }
     }
 
-    const fn last(&self) -> &Cave {
-        &self.last
+        fn contains(&self, small_cave: &str) -> bool {
+        self.small_caves.contains(&small_cave)
     }
 
-    fn contains(&self, small_cave: &String) -> bool {
-        self.small_caves.contains(small_cave)
-    }
-
-    fn push(&self, cave: &Cave) -> Option<Self> {
+    fn push(&self, cave: &'a Cave) -> Option<Self> {
         let revisit = if let Cave::Small(small_cave) = cave {
             self.contains(small_cave)
         } else {
@@ -83,17 +79,17 @@ impl Path {
             let mut new = Self {
                 small_caves: self.small_caves.clone(),
                 may_revisit: !revisit && self.may_revisit,
-                last: cave.clone(),
+                last: cave,
             };
             if let Cave::Small(small_cave) = &cave {
-                new.small_caves.push(small_cave.clone());
+                new.small_caves.push(small_cave);
             };
             Some(new)
         }
     }
 
     fn is_complete(&self) -> bool {
-        self.last() == &Cave::End
+        self.last == &Cave::End
     }
 }
 
@@ -124,11 +120,11 @@ impl FromStr for CaveSystem {
 }
 
 pub fn part_1(system: &CaveSystem) -> usize {
-    system.paths(false).len()
+    system.count_paths(false)
 }
 
 pub fn part_2(system: &CaveSystem) -> usize {
-    system.paths(true).len()
+    system.count_paths(true)
 }
 
 #[cfg(test)]
