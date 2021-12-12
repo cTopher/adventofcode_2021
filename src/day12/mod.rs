@@ -63,7 +63,7 @@ impl<'a> Path<'a> {
         }
     }
 
-        fn contains(&self, small_cave: &str) -> bool {
+    fn contains(&self, small_cave: &str) -> bool {
         self.small_caves.contains(&small_cave)
     }
 
