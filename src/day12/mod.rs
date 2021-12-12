@@ -22,23 +22,20 @@ impl CaveSystem {
     }
 
     fn paths(&self, may_revisit: bool) -> Vec<Path> {
-        self.find_paths(Path::new(may_revisit))
-            .into_iter()
-            .filter(Path::done)
-            .collect()
-    }
-
-    fn find_paths(&self, path: Path) -> Vec<Path> {
-        if path.done() {
-            return vec![path];
+        let mut paths = vec![Path::new(may_revisit)];
+        let mut results = Vec::new();
+        while let Some(path) = paths.pop() {
+            for cave in self.connections.get(path.last()).unwrap() {
+                if let Some(new) = path.push(cave) {
+                    if new.is_complete() {
+                        results.push(new);
+                    } else {
+                        paths.push(new);
+                    }
+                }
+            }
         }
-        self.connections
-            .get(path.last())
-            .unwrap()
-            .iter()
-            .filter_map(move |to| path.push(to))
-            .flat_map(|path| self.find_paths(path))
-            .collect()
+        results
     }
 }
 
@@ -95,7 +92,7 @@ impl Path {
         }
     }
 
-    fn done(&self) -> bool {
+    fn is_complete(&self) -> bool {
         self.last() == &Cave::End
     }
 }

@@ -1,4 +1,4 @@
-use adventofcode_2021::{day06, day11, parse_file};
+use adventofcode_2021::{day06, day11, day12, parse_file};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn day_6(c: &mut Criterion) {
@@ -15,5 +15,13 @@ fn day_11(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_6, day_11);
+fn day_12(c: &mut Criterion) {
+    let input: day12::CaveSystem = parse_file("src/day12/input.txt");
+    c.bench_function("day 12", |b| {
+        b.iter(|| day12::part_2(black_box(&input)));
+    });
+}
+
+criterion_group!(benches, day_12);
 criterion_main!(benches);
+// [239.14 ms 239.61 ms 240.13 ms]
