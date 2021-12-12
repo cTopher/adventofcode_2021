@@ -133,7 +133,7 @@ mod tests {
 
     use super::*;
 
-    const MINI_EXAMPLE: &str = "\
+    const SMALL_EXAMPLE: &str = "\
         start-A\n\
         start-b\n\
         A-c\n\
@@ -166,12 +166,12 @@ mod tests {
 
     #[test]
     fn small_example_1_produces_10() {
-        let system = MINI_EXAMPLE.parse().unwrap();
+        let system = SMALL_EXAMPLE.parse().unwrap();
         assert_eq!(10, part_1(&system));
     }
 
     #[test]
-    fn large_example_1_produces_10() {
+    fn large_example_1_produces_226() {
         let system = LARGE_EXAMPLE.parse().unwrap();
         assert_eq!(226, part_1(&system));
     }
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn small_example_2_produces_36() {
-        let system = MINI_EXAMPLE.parse().unwrap();
+        let system = SMALL_EXAMPLE.parse().unwrap();
         assert_eq!(36, part_2(&system));
     }
 
