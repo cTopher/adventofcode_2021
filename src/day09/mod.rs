@@ -58,22 +58,19 @@ impl<'a> Entry<'a> {
         self.map.entry(Position::new(self.x() + 1, self.y()))
     }
 
-    pub fn neighbours(&self) -> Vec<Self> {
+    pub fn neighbours(&self) -> impl Iterator<Item = Entry<'a>> {
         [self.up(), self.down(), self.left(), self.right()]
             .into_iter()
             .flatten()
-            .collect()
     }
 
     pub fn is_low_point(&self) -> bool {
-        let neighbours = self.neighbours();
-        neighbours.into_iter().all(|n| self.height < n.height)
+        self.neighbours().all(|n| self.height < n.height)
     }
 
     pub fn basin(&self) -> HashSet<Position> {
         let mut basin: HashSet<Position> = self
             .neighbours()
-            .into_iter()
             .filter(|n| n.flow_to() == Some(self.position))
             .flat_map(|n| n.basin())
             .collect();
@@ -86,7 +83,6 @@ impl<'a> Entry<'a> {
             None
         } else {
             self.neighbours()
-                .into_iter()
                 .filter(|n| n.height < self.height)
                 .min_by_key(|n| n.height)
                 .map(|n| n.position)

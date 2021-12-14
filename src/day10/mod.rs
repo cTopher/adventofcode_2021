@@ -10,16 +10,16 @@ enum LineStatus {
 }
 
 impl CharStatus {
-    fn new(a: Option<char>, b: char) -> Self {
+    fn new(last_open: Option<char>, new: char) -> Self {
         use CharStatus::{Close, Illegal, Open};
-        match (a, b) {
+        match (last_open, new) {
             (_, '(' | '[' | '{' | '<') => Open,
             (Some('('), ')') | (Some('['), ']') | (Some('{'), '}') | (Some('<'), '>') => Close,
             (_, ')') => Illegal(3),
             (_, ']') => Illegal(57),
             (_, '}') => Illegal(1197),
             (_, '>') => Illegal(25137),
-            _ => panic!("WTF mate: '{:?}' '{}'", a, b),
+            _ => panic!("WTF mate: '{:?}' '{}'", last_open, new),
         }
     }
 }

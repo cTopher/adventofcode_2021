@@ -1,27 +1,59 @@
+use std::collections::HashMap;
+use std::fmt;
 use std::str::FromStr;
 
+#[derive(Default, Clone, Debug)]
 struct Polymer {
     elements: Vec<char>,
 }
 
 impl Polymer {
-    fn apply(self, rules: &[PairInsertion]) -> Self {
-        let mut result: Vec<(char, char, Vec<char>)> = self.elements.windows(2).map(|&[a, b]| {
-            (a, b, Vec::new())
-        }).collect();
+    fn apply_n(&self, rules: &[PairInsertion], n: usize) -> Self {
+        (1..n).fold(self.apply(rules), |polymer, _| polymer.apply(rules))
+    }
+
+    fn apply(&self, rules: &[PairInsertion]) -> Self {
+        let mut result: Vec<(Vec<char>, char)> = self
+            .elements
+            .windows(2)
+            .map(|window| (vec![window[0]], window[1]))
+            .collect();
         for rule in rules {
-            result.iter_mut().find(|&&mut (a, b, _)| a == rule.a && b == rule.b)
-                .map(|&mut (_, _, ref mut c)| c.push(rule.c));
+            result
+                .iter_mut()
+                .filter(|(chars, b)| chars[0] == rule.a && b == &rule.b)
+                .for_each(|(chars, _)| chars.push(rule.insertion));
         }
-        result.into_iter().flat_map(|(a, _, insertions)| ).collect()
+        let elements: Vec<char> = result
+            .into_iter()
+            .flat_map(|(chars, _)| chars)
+            .chain(std::iter::once(*self.elements.last().unwrap()))
+            .collect();
+        Self { elements }
+    }
+
+    pub fn counts(&self) -> HashMap<char, u64> {
+        let mut counts: HashMap<char, u64> = HashMap::new();
+        for c in self.elements.iter() {
+            *counts.entry(*c).or_insert(0) += 1;
+        }
+        counts
     }
 }
 
-struct Manual {
+impl fmt::Display for Polymer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", String::from_iter(self.elements.iter()))
+    }
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct Manual {
     polymer: Polymer,
     rules: Vec<PairInsertion>,
 }
 
+#[derive(Clone, Debug)]
 struct PairInsertion {
     a: char,
     b: char,
@@ -53,7 +85,7 @@ impl FromStr for PairInsertion {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (pair, insertion) = input.split_once(" ->").unwrap();
+        let (pair, insertion) = input.split_once(" -> ").unwrap();
         let mut pair = pair.chars();
         Ok(Self {
             a: pair.next().unwrap(),
@@ -63,16 +95,14 @@ impl FromStr for PairInsertion {
     }
 }
 
-pub fn part_1(mut paper: Paper) -> usize {
-    paper.do_first_instruction();
-    paper.number_of_dots()
+pub fn part_1(manual: &Manual) -> u64 {
+    let counts = manual.polymer.apply_n(&manual.rules, 10).counts();
+    counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
-pub fn part_2(mut paper: Paper) -> String {
-    paper.do_instructions();
-    let paper = paper.to_string();
-    println!("{}", paper);
-    paper
+pub fn part_2(manual: &Manual) -> u64 {
+    let counts = manual.polymer.apply_n(&manual.rules, 40).counts();
+    counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
 #[cfg(test)]
@@ -82,71 +112,47 @@ mod tests {
     use super::*;
 
     const EXAMPLE: &str = "\
-        6,10\n\
-        0,14\n\
-        9,10\n\
-        0,3\n\
-        10,4\n\
-        4,11\n\
-        6,0\n\
-        6,12\n\
-        4,1\n\
-        0,13\n\
-        10,12\n\
-        3,4\n\
-        3,0\n\
-        8,4\n\
-        1,10\n\
-        2,14\n\
-        8,10\n\
-        9,0\n\
+        NNCB\n\
         \n\
-        fold along y=7\n\
-        fold along x=5\
+        CH -> B\n\
+        HH -> N\n\
+        CB -> H\n\
+        NH -> C\n\
+        HB -> C\n\
+        HC -> B\n\
+        HN -> C\n\
+        NN -> C\n\
+        BH -> H\n\
+        NC -> B\n\
+        NB -> B\n\
+        BN -> B\n\
+        BB -> N\n\
+        BC -> B\n\
+        CC -> N\n\
+        CN -> C\n\
     ";
 
     #[test]
-    fn example_1_produces_17() {
-        let paper = EXAMPLE.parse().unwrap();
-        assert_eq!(17, part_1(paper));
+    fn example_1_produces_1588() {
+        let manual = EXAMPLE.parse().unwrap();
+        assert_eq!(1588, part_1(&manual));
     }
 
     #[test]
     fn part_1_works() {
-        let paper = parse_file("src/day13/input.txt");
-        assert_eq!(701, part_1(paper));
+        let manual = parse_file("src/day14/input.txt");
+        assert_eq!(3411, part_1(&manual));
     }
 
-    #[test]
-    fn example_2_produces_a_square() {
-        let paper = EXAMPLE.parse().unwrap();
-        assert_eq!(
-            "\
-                #####\n\
-                #...#\n\
-                #...#\n\
-                #...#\n\
-                #####\n\
-                .....\n\
-                .....\n\
-            ",
-            part_2(paper)
-        );
-    }
-
-    #[test]
-    fn part_2_works() {
-        let paper = parse_file("src/day13/input.txt");
-        assert_eq!(
-            "\
-                ####.###..####.#..#.###..####...##.#....\n\
-                #....#..#.#....#.#..#..#.#.......#.#....\n\
-                ###..#..#.###..##...###..###.....#.#....\n\
-                #....###..#....#.#..#..#.#.......#.#....\n\
-                #....#....#....#.#..#..#.#....#..#.#....\n\
-                #....#....####.#..#.###..####..##..####.\n\
-            ",
-            part_2(paper)
-        );
-    }
+    // #[test]
+    // fn example_2_produces_2188189693529() {
+    //     let manual = EXAMPLE.parse().unwrap();
+    //     assert_eq!(2188189693529, part_2(&manual));
+    // }
+    //
+    // #[test]
+    // fn part_2_works() {
+    //     let manual = parse_file("src/day14/input.txt");
+    //     assert_eq!(3411, part_1(&manual));
+    // }
 }
