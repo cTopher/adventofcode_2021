@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-#[derive(Default, Clone, Debug)]
+type Chain = (char, char);
+
+#[derive(Clone, Debug)]
 struct Polymer {
-    chains: HashMap<(char, char), u64>,
-    last_char: char,
+    chains: HashMap<Chain, u64>,
+    last_element: char,
 }
 
 impl Polymer {
@@ -15,11 +17,11 @@ impl Polymer {
     }
 
     fn apply(&mut self, rules: &[PairInsertion]) {
-        let mut new_chains: HashMap<(char, char), u64> = HashMap::new();
+        let mut new_chains: HashMap<Chain, u64> = HashMap::new();
         for rule in rules {
-            if let Some(count) = self.chains.remove(&(rule.a, rule.b)) {
-                *new_chains.entry((rule.a, rule.insertion)).or_default() += count;
-                *new_chains.entry((rule.insertion, rule.b)).or_default() += count;
+            if let Some(count) = self.chains.remove(&rule.from) {
+                *new_chains.entry(rule.to.0).or_default() += count;
+                *new_chains.entry(rule.to.1).or_default() += count;
             }
         }
         for (chain, count) in new_chains {
@@ -28,25 +30,24 @@ impl Polymer {
     }
 
     pub fn elements(&self) -> HashMap<char, u64> {
-        let mut counts: HashMap<char, u64> = HashMap::from([(self.last_char, 1)]);
+        let mut elements: HashMap<char, u64> = HashMap::from([(self.last_element, 1)]);
         for (&(a, _), &count) in &self.chains {
-            *counts.entry(a).or_insert(0) += count;
+            *elements.entry(a).or_insert(0) += count;
         }
-        counts
+        elements
     }
 }
 
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Manual {
     polymer_template: Polymer,
     rules: Vec<PairInsertion>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 struct PairInsertion {
-    a: char,
-    b: char,
-    insertion: char,
+    from: Chain,
+    to: (Chain, Chain),
 }
 
 impl FromStr for Polymer {
@@ -54,12 +55,15 @@ impl FromStr for Polymer {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let chars: Vec<char> = s.chars().collect();
-        let mut chains: HashMap<(char, char), u64> = HashMap::new();
+        let mut chains: HashMap<Chain, u64> = HashMap::new();
         for window in chars.windows(2) {
             *chains.entry((window[0], window[1])).or_insert(0) += 1;
         }
         let last_char = *chars.last().unwrap();
-        Ok(Self { chains, last_char })
+        Ok(Self {
+            chains,
+            last_element: last_char,
+        })
     }
 }
 
@@ -81,10 +85,12 @@ impl FromStr for PairInsertion {
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let (pair, insertion) = input.split_once(" -> ").unwrap();
         let mut pair = pair.chars();
+        let a = pair.next().unwrap();
+        let b = pair.next().unwrap();
+        let c = insertion.chars().next().unwrap();
         Ok(Self {
-            a: pair.next().unwrap(),
-            b: pair.next().unwrap(),
-            insertion: insertion.chars().next().unwrap(),
+            from: (a, b),
+            to: ((a, c), (c, b)),
         })
     }
 }
