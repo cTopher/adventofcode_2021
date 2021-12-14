@@ -8,26 +8,28 @@ struct Polymer {
 }
 
 impl Polymer {
-    fn apply_n(&self, rules: &[PairInsertion], n: usize) -> Self {
+    fn first(&self) -> char {
+        self.elements[0]
+    }
+
+    fn last(&self) -> char {
+        self.elements[self.elements.len() - 1]
+    }
+
+    fn apply_n(&self, rules: &[Polymer], n: usize) -> Self {
         (1..n).fold(self.apply(rules), |polymer, _| polymer.apply(rules))
     }
 
-    fn apply(&self, rules: &[PairInsertion]) -> Self {
-        let mut result: Vec<(Vec<char>, char)> = self
+    fn apply(&self, rules: &[Polymer]) -> Self {
+        let elements: Vec<char> = self
             .elements
             .windows(2)
-            .map(|window| (vec![window[0]], window[1]))
-            .collect();
-        for rule in rules {
-            result
-                .iter_mut()
-                .filter(|(chars, b)| chars[0] == rule.a && b == &rule.b)
-                .for_each(|(chars, _)| chars.push(rule.insertion));
-        }
-        let elements: Vec<char> = result
-            .into_iter()
-            .flat_map(|(chars, _)| chars)
-            .chain(std::iter::once(*self.elements.last().unwrap()))
+            .flat_map(|window| {
+                rules.iter().find(|&rule| rule.first() == window[0] && rule.last() == window[1])
+                    .map(|rule| rule.elements.iter().copied().take(rule.elements.len()-1).collect())
+                    .unwrap_or_else(|| vec![window[0]])
+            })
+            .chain(std::iter::once(self.last()))
             .collect();
         Self { elements }
     }
@@ -50,14 +52,7 @@ impl fmt::Display for Polymer {
 #[derive(Default, Clone, Debug)]
 pub struct Manual {
     polymer: Polymer,
-    rules: Vec<PairInsertion>,
-}
-
-#[derive(Clone, Debug)]
-struct PairInsertion {
-    a: char,
-    b: char,
-    insertion: char,
+    rules: Vec<Polymer>,
 }
 
 impl FromStr for Polymer {
@@ -76,32 +71,48 @@ impl FromStr for Manual {
         let (polymer, rules) = input.split_once("\n\n").unwrap();
         Ok(Self {
             polymer: polymer.parse().unwrap(),
-            rules: rules.lines().map(|line| line.parse().unwrap()).collect(),
+            rules: rules.lines().map(parse_rule).collect(),
         })
     }
 }
 
-impl FromStr for PairInsertion {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (pair, insertion) = input.split_once(" -> ").unwrap();
-        let mut pair = pair.chars();
-        Ok(Self {
-            a: pair.next().unwrap(),
-            b: pair.next().unwrap(),
-            insertion: insertion.chars().next().unwrap(),
-        })
-    }
+fn parse_rule(input: &str) -> Polymer {
+    let (pair, insertion) = input.split_once(" -> ").unwrap();
+    let mut pair = pair.chars();
+    let elements = vec![
+        pair.next().unwrap(),
+        insertion.chars().next().unwrap(),
+        pair.next().unwrap(),
+    ];
+    Polymer { elements }
 }
 
 pub fn part_1(manual: &Manual) -> u64 {
-    let counts = manual.polymer.apply_n(&manual.rules, 10).counts();
+    let r1: Vec<Polymer> = manual.rules.clone();
+    let r2:Vec<Polymer> = r1.iter().map(|rule| rule.apply(&r1)).collect();
+    let r4:Vec<Polymer> = r2.iter().map(|rule| rule.apply(&r2)).collect();
+    let r8:Vec<Polymer> = r4.iter().map(|rule| rule.apply(&r4)).collect();
+
+
+    let counts = manual.polymer.apply(&r8).apply(&r2).counts();
     counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
 pub fn part_2(manual: &Manual) -> u64 {
-    let counts = manual.polymer.apply_n(&manual.rules, 40).counts();
+    let r1: Vec<Polymer> = manual.rules.clone();
+    let r2:Vec<Polymer> = r1.iter().map(|rule| rule.apply(&r1)).collect();
+    let r4:Vec<Polymer> = r2.iter().map(|rule| rule.apply(&r2)).collect();
+    let r8:Vec<Polymer> = r4.iter().map(|rule| rule.apply(&r4)).collect();
+    let r16:Vec<Polymer> = r8.iter().map(|rule| rule.apply(&r8)).collect();
+    let r32:Vec<Polymer> = r16.iter().map(|rule| rule.apply(&r16)).collect();
+
+
+
+    let polymer = manual.polymer.apply(&r32).apply(&r8);
+
+
+
+    let counts = polymer.counts();
     counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
@@ -144,15 +155,15 @@ mod tests {
         assert_eq!(3411, part_1(&manual));
     }
 
-    // #[test]
-    // fn example_2_produces_2188189693529() {
-    //     let manual = EXAMPLE.parse().unwrap();
-    //     assert_eq!(2188189693529, part_2(&manual));
-    // }
-    //
-    // #[test]
-    // fn part_2_works() {
-    //     let manual = parse_file("src/day14/input.txt");
-    //     assert_eq!(3411, part_1(&manual));
-    // }
+    #[test]
+    fn example_2_produces_2188189693529() {
+        let manual = EXAMPLE.parse().unwrap();
+        assert_eq!(2188189693529, part_2(&manual));
+    }
+
+    #[test]
+    fn part_2_works() {
+        let manual = parse_file("src/day14/input.txt");
+        assert_eq!(3411, part_1(&manual));
+    }
 }
