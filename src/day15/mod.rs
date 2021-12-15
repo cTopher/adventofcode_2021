@@ -8,7 +8,6 @@ type Position = (usize, usize);
 struct Node {
     risk_level: usize,
     total_risk: usize,
-    heuristic: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -22,13 +21,12 @@ pub struct Cavern {
 struct Path {
     position: Position,
     total_risk: usize,
-    score: usize, // lower is better
 }
 
 impl Ord for Path {
-    /// Path B > A when B.score < A.score because a lower score is better
+    /// Path B > A when `B.total_risk` < `A.total_risk` because a lower risk is better
     fn cmp(&self, other: &Self) -> Ordering {
-        other.score.cmp(&self.score)
+        other.total_risk.cmp(&self.total_risk)
     }
 }
 
@@ -65,7 +63,6 @@ impl Cavern {
         paths.push(Path {
             position: (0, 0),
             total_risk: 0,
-            score: self.nodes[0][0].heuristic,
         });
         while let Some(path) = paths.pop() {
             if self.is_goal(path.position) {
@@ -79,7 +76,6 @@ impl Cavern {
                     paths.push(Path {
                         position,
                         total_risk,
-                        score: total_risk + node.heuristic,
                     });
                 }
             }
@@ -99,14 +95,12 @@ impl Cavern {
             let extra = x / input_width + y / input_height;
             (risk_levels[y % input_height][x % input_width] + extra - 1) % 9 + 1
         };
-        let h0 = risk(width - 1, height - 1) + height + width - 2;
         let nodes: Vec<Vec<Node>> = (0..height)
             .map(|y| {
                 (0..width)
                     .map(|x| Node {
                         risk_level: risk(x, y),
                         total_risk: usize::MAX,
-                        heuristic: h0 - x - y,
                     })
                     .collect()
             })
