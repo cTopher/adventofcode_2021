@@ -106,7 +106,7 @@ impl Cavern {
                     .map(|x| Node {
                         risk_level: risk(x, y),
                         total_risk: usize::MAX,
-                        heuristic: h0 + x + y,
+                        heuristic: h0 - x - y,
                     })
                     .collect()
             })
