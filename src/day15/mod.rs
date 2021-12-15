@@ -8,7 +8,7 @@ type Position = (usize, usize);
 struct Node {
     risk_level: usize,
     g: usize,
-    h: usize,
+    heuristic: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -55,8 +55,8 @@ impl Cavern {
         [up, right, down, left].into_iter().flatten()
     }
 
-    fn get_mut(&mut self, (x, y): Position) -> &mut Node {
-        &mut self.nodes[y][x]
+    fn is_goal(&self, position: Position) -> bool {
+        position == (self.width - 1, self.height - 1)
     }
 
     pub fn solve(&mut self) -> usize {
@@ -65,21 +65,21 @@ impl Cavern {
         paths.push(Path {
             position: (0, 0),
             g: 0,
-            f: self.nodes[0][0].h,
+            f: self.nodes[0][0].heuristic,
         });
         while let Some(path) = paths.pop() {
-            if path.position == (self.width - 1, self.height - 1) {
+            if self.is_goal(path.position) {
                 return path.g;
             }
-            for position in self.neighbours(path.position) {
-                let node = self.get_mut(position);
+            for position @ (x, y) in self.neighbours(path.position) {
+                let node = &mut self.nodes[y][x];
                 let g = path.g + node.risk_level;
-                if node.g > g {
+                if g < node.g {
                     node.g = g;
                     paths.push(Path {
                         position,
                         g,
-                        f: g + node.h,
+                        f: g + node.heuristic,
                     });
                 }
             }
@@ -90,23 +90,23 @@ impl Cavern {
 
 impl Cavern {
     pub fn new(input: CavernInput, size: usize) -> Self {
-        let CavernInput(risk_levels) = input;
+        let risk_levels = input.risk_levels;
         let input_height = risk_levels.len();
         let input_width = risk_levels[0].len();
         let height = input_height * size;
         let width = input_width * size;
         let risk = |x: usize, y: usize| {
             let extra = x / input_width + y / input_height;
-            (risk_levels[y % input_height][x % input_width] + extra -1) % 9 + 1
+            (risk_levels[y % input_height][x % input_width] + extra - 1) % 9 + 1
         };
-        let h_start = risk(width - 1, height - 1) + height + width - 2;
+        let h0 = risk(width - 1, height - 1) + height + width - 2;
         let nodes: Vec<Vec<Node>> = (0..height)
             .map(|y| {
                 (0..width)
                     .map(|x| Node {
                         risk_level: risk(x, y),
                         g: usize::MAX,
-                        h: h_start + x + y,
+                        heuristic: h0 + x + y,
                     })
                     .collect()
             })
@@ -119,7 +119,10 @@ impl Cavern {
     }
 }
 
-pub struct CavernInput(Vec<Vec<usize>>);
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+pub struct CavernInput {
+    risk_levels: Vec<Vec<usize>>,
+}
 
 impl FromStr for CavernInput {
     type Err = ();
@@ -133,7 +136,7 @@ impl FromStr for CavernInput {
                     .collect()
             })
             .collect();
-        Ok(Self(risk_levels))
+        Ok(Self { risk_levels })
     }
 }
 
@@ -182,11 +185,9 @@ mod tests {
         assert_eq!(315, part_2(input));
     }
 
-
     #[test]
     fn part_2_works() {
         let input = parse_file("src/day15/input.txt");
         assert_eq!(2901, part_2(input));
     }
-
 }
