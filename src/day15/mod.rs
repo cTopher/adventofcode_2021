@@ -1,5 +1,5 @@
-use std::cmp::{ Ordering};
-use std::collections::{BinaryHeap};
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use std::str::FromStr;
 
 type Position = (usize, usize);
@@ -9,14 +9,6 @@ struct Node {
     risk_level: usize,
     g: usize,
     h: usize,
-    f: usize,
-}
-
-impl Node {
-    fn set_g(&mut self, g: usize) {
-        self.g = g;
-        self.f = g + self.h;
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -47,8 +39,7 @@ impl PartialOrd for Path {
 }
 
 impl Cavern {
-    //TODO iterator
-    fn neighbours(&self, (x, y): Position) -> Vec<Position> {
+    fn neighbours(&self, (x, y): Position) -> impl Iterator<Item = Position> + 'static {
         let up = if y > 0 { Some((x, y - 1)) } else { None };
         let right = if x < self.width - 1 {
             Some((x + 1, y))
@@ -61,7 +52,7 @@ impl Cavern {
             None
         };
         let left = if x > 0 { Some((x - 1, y)) } else { None };
-        [up, right, down, left].into_iter().flatten().collect()
+        [up, right, down, left].into_iter().flatten()
     }
 
     fn get_mut(&mut self, (x, y): Position) -> &mut Node {
@@ -69,11 +60,12 @@ impl Cavern {
     }
 
     pub fn solve(&mut self) -> usize {
+        self.nodes[0][0].g = 0;
         let mut paths = BinaryHeap::new();
         paths.push(Path {
             position: (0, 0),
             g: 0,
-            f: self.nodes[0][0].f,
+            f: self.nodes[0][0].h,
         });
         while let Some(path) = paths.pop() {
             if path.position == (self.width - 1, self.height - 1) {
@@ -83,11 +75,11 @@ impl Cavern {
                 let node = self.get_mut(position);
                 let g = path.g + node.risk_level;
                 if node.g > g {
-                    node.set_g(g);
+                    node.g = g;
                     paths.push(Path {
                         position,
                         g,
-                        f: node.f,
+                        f: g + node.h,
                     });
                 }
             }
@@ -96,28 +88,30 @@ impl Cavern {
     }
 }
 
-impl From<Vec<Vec<usize>>> for Cavern {
-    fn from(risk_levels: Vec<Vec<usize>>) -> Self {
-        let height = risk_levels.len();
-        let width = risk_levels[0].len();
-        let h_start = risk_levels[height - 1][width - 1] + height + width - 2;
-        let mut nodes: Vec<Vec<Node>> = risk_levels
-            .into_iter()
-            .enumerate()
-            .map(|(y, row)| {
-                row.into_iter()
-                    .enumerate()
-                    .map(|(x, risk_level)| Node {
-                        risk_level,
+impl Cavern {
+    pub fn new(input: CavernInput, size: usize) -> Self {
+        let CavernInput(risk_levels) = input;
+        let input_height = risk_levels.len();
+        let input_width = risk_levels[0].len();
+        let height = input_height * size;
+        let width = input_width * size;
+        let risk = |x: usize, y: usize| {
+            let extra = x / input_width + y / input_height;
+            (risk_levels[y % input_height][x % input_width] + extra -1) % 9 + 1
+        };
+        let h_start = risk(width - 1, height - 1) + height + width - 2;
+        let nodes: Vec<Vec<Node>> = (0..height)
+            .map(|y| {
+                (0..width)
+                    .map(|x| Node {
+                        risk_level: risk(x, y),
                         g: usize::MAX,
                         h: h_start + x + y,
-                        f: usize::MAX,
                     })
                     .collect()
             })
             .collect();
-        nodes[0][0].set_g(0);
-        Cavern {
+        Self {
             nodes,
             width,
             height,
@@ -125,11 +119,13 @@ impl From<Vec<Vec<usize>>> for Cavern {
     }
 }
 
-impl FromStr for Cavern {
+pub struct CavernInput(Vec<Vec<usize>>);
+
+impl FromStr for CavernInput {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let risk_levels: Vec<Vec<usize>> = input
+        let risk_levels = input
             .lines()
             .map(|line| {
                 line.chars()
@@ -137,14 +133,17 @@ impl FromStr for Cavern {
                     .collect()
             })
             .collect();
-        Ok(risk_levels.into())
+        Ok(Self(risk_levels))
     }
 }
 
-pub fn part_1(mut cavern: Cavern) -> usize {
-    cavern.solve()
+pub fn part_1(input: CavernInput) -> usize {
+    Cavern::new(input, 1).solve()
 }
 
+pub fn part_2(input: CavernInput) -> usize {
+    Cavern::new(input, 5).solve()
+}
 
 #[cfg(test)]
 mod tests {
@@ -167,14 +166,27 @@ mod tests {
 
     #[test]
     fn example_1_produces_40() {
-        let cavern = EXAMPLE.parse().unwrap();
-        assert_eq!(40, part_1(cavern));
+        let input = EXAMPLE.parse().unwrap();
+        assert_eq!(40, part_1(input));
     }
 
     #[test]
     fn part_1_works() {
-        let cavern = parse_file("src/day15/input.txt");
-        assert_eq!(0, part_1(cavern));
+        let input = parse_file("src/day15/input.txt");
+        assert_eq!(498, part_1(input));
+    }
+
+    #[test]
+    fn example_2_produces_315() {
+        let input = EXAMPLE.parse().unwrap();
+        assert_eq!(315, part_2(input));
+    }
+
+
+    #[test]
+    fn part_2_works() {
+        let input = parse_file("src/day15/input.txt");
+        assert_eq!(2901, part_2(input));
     }
 
 }
