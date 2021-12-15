@@ -7,7 +7,7 @@ type Position = (usize, usize);
 #[derive(Clone, Debug, Copy, Hash)]
 struct Node {
     risk_level: usize,
-    g: usize,
+    total_risk: usize,
     heuristic: usize,
 }
 
@@ -21,14 +21,14 @@ pub struct Cavern {
 #[derive(Clone, Debug, Copy, Hash, Eq, PartialEq)]
 struct Path {
     position: Position,
-    g: usize,
-    f: usize,
+    total_risk: usize,
+    score: usize, // lower is better
 }
 
-/// Path A < B when B.f < A.f
 impl Ord for Path {
+    /// Path B > A when B.score < A.score because a lower score is better
     fn cmp(&self, other: &Self) -> Ordering {
-        other.f.cmp(&self.f)
+        other.score.cmp(&self.score)
     }
 }
 
@@ -60,26 +60,26 @@ impl Cavern {
     }
 
     pub fn solve(&mut self) -> usize {
-        self.nodes[0][0].g = 0;
+        self.nodes[0][0].total_risk = 0;
         let mut paths = BinaryHeap::new();
         paths.push(Path {
             position: (0, 0),
-            g: 0,
-            f: self.nodes[0][0].heuristic,
+            total_risk: 0,
+            score: self.nodes[0][0].heuristic,
         });
         while let Some(path) = paths.pop() {
             if self.is_goal(path.position) {
-                return path.g;
+                return path.total_risk;
             }
             for position @ (x, y) in self.neighbours(path.position) {
                 let node = &mut self.nodes[y][x];
-                let g = path.g + node.risk_level;
-                if g < node.g {
-                    node.g = g;
+                let total_risk = path.total_risk + node.risk_level;
+                if total_risk < node.total_risk {
+                    node.total_risk = total_risk;
                     paths.push(Path {
                         position,
-                        g,
-                        f: g + node.heuristic,
+                        total_risk,
+                        score: total_risk + node.heuristic,
                     });
                 }
             }
@@ -105,7 +105,7 @@ impl Cavern {
                 (0..width)
                     .map(|x| Node {
                         risk_level: risk(x, y),
-                        g: usize::MAX,
+                        total_risk: usize::MAX,
                         heuristic: h0 + x + y,
                     })
                     .collect()
