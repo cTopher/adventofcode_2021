@@ -70,7 +70,7 @@ fn hits(v0: Vector, target: TargetArea) -> bool {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn find_all(target: TargetArea) -> impl Iterator<Item = Vector> {
+fn find_all_start_velocities(target: TargetArea) -> impl Iterator<Item = Vector> {
     let vx_min = ((f64::from(target.x_min).mul_add(8.0, 1.0).sqrt() - 1.0) / 2.0).ceil() as i32;
     let vy_max = -target.y_min; // no idea if this is correct, but it works
     (vx_min..=target.x_max)
@@ -79,12 +79,15 @@ fn find_all(target: TargetArea) -> impl Iterator<Item = Vector> {
 }
 
 pub fn part_1(target: TargetArea) -> i32 {
-    let vy = find_all(target).map(|v| v.y).max().unwrap();
+    let vy = find_all_start_velocities(target)
+        .map(|v| v.y)
+        .max()
+        .unwrap();
     vy * (vy + 1) / 2
 }
 
 pub fn part_2(target: TargetArea) -> usize {
-    find_all(target).count()
+    find_all_start_velocities(target).count()
 }
 
 #[cfg(test)]
