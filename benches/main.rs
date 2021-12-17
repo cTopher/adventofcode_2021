@@ -1,4 +1,4 @@
-use adventofcode_2021::{day06, day11, day12, day15, parse_file};
+use adventofcode_2021::{day06, day11, day12, day15, day17, parse_file};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn day_6(c: &mut Criterion) {
@@ -29,5 +29,12 @@ fn day_15(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_6, day_11, day_12, day_15);
+fn day_17(c: &mut Criterion) {
+    let input: day17::TargetArea = parse_file("src/day17/input.txt");
+    c.bench_function("day 17", |b| {
+        b.iter(|| day17::part_2(black_box(input)));
+    });
+}
+
+criterion_group!(benches, day_6, day_11, day_12, day_15, day_17);
 criterion_main!(benches);
