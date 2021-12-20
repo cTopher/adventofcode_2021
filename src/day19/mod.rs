@@ -35,13 +35,13 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    fn overlap(&self, other: &Scanner) -> usize {
+    fn overlap(&self, other: &Self) -> usize {
         self.all_distances
             .intersection(&other.all_distances)
             .count()
     }
 
-    fn merge(&mut self, mut other: Scanner) -> Vector {
+    fn merge(&mut self, mut other: Self) -> Vector {
         let (orientation, translation) = self.get_transformation(&other);
         other.apply_transformation(orientation, translation);
         for beacon in other.beacons {
@@ -59,7 +59,7 @@ impl Scanner {
         }
     }
 
-    fn get_transformation(&mut self, other: &Scanner) -> (u8, Vector) {
+    fn get_transformation(&mut self, other: &Self) -> (u8, Vector) {
         let overlap: Vec<(Vector, Vector)> = (0..self.beacons.len())
             .flat_map(|i| (0..other.beacons.len()).map(move |j| (i, j)))
             .filter(|&(i, j)| {

@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use std::str::FromStr;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Input {
     algorithm: Vec<bool>,
     image: Image,

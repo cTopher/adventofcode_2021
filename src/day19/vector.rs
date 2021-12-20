@@ -13,7 +13,7 @@ impl Add for Vector {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Vector {
+        Self {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
@@ -25,7 +25,7 @@ impl Neg for Vector {
     type Output = Self;
 
     fn neg(self) -> Self {
-        Vector {
+        Self {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -52,23 +52,23 @@ impl fmt::Display for Vector {
 }
 
 impl Vector {
-    pub fn new(x: i32, y: i32, z: i32) -> Self {
+    pub const fn new(x: i32, y: i32, z: i32) -> Self {
         Self { x, y, z }
     }
 
-    pub fn distance(&self, other: Vector) -> i32 {
+    pub const fn distance(&self, other: Self) -> i32 {
         (self.x - other.x).pow(2) + (self.y - other.y).pow(2) + (self.z - other.z).pow(2)
     }
 
-    pub fn manhattan_distance(&self, other: Vector) -> i32 {
+    pub const fn manhattan_distance(&self, other: Self) -> i32 {
         (self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs()
     }
 
-    pub fn orientation(self, i: u8) -> Vector {
+    pub fn orientation(self, i: u8) -> Self {
         self.face(i % 6).rot_x((i / 6) % 4)
     }
 
-    fn face(self, i: u8) -> Vector {
+    fn face(self, i: u8) -> Self {
         let Self { x, y, z } = self;
         match i {
             0 => self,
@@ -81,7 +81,7 @@ impl Vector {
         }
     }
 
-    fn rot_x(self, amount: u8) -> Vector {
+    fn rot_x(self, amount: u8) -> Self {
         let Self { x, y, z } = self;
         match amount {
             0 => self,
