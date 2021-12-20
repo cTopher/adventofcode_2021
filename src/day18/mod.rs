@@ -19,45 +19,35 @@ impl Add for Snailfish {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
-enum Explosion {
-    Fizzle,
-    Boom(Option<u32>, Option<u32>),
-}
-
 impl Snailfish {
     fn reduce(&mut self) {
         loop {
-            while self.explode(0) != Explosion::Fizzle {}
+            self.explode(0);
             if !self.split() {
                 return;
             };
         }
     }
 
-    fn explode(&mut self, level: usize) -> Explosion {
+    fn explode(&mut self, level: usize) -> (Option<u32>, Option<u32>) {
         match self {
-            Snailfish::Number(_) => Explosion::Fizzle,
+            Snailfish::Number(_) => (None, None),
             Snailfish::Pair(a, b) if level == 4 => {
                 let a = a.unwrap_number();
                 let b = b.unwrap_number();
                 *self = Self::default();
-                Explosion::Boom(Some(a), Some(b))
+                (Some(a), Some(b))
             }
-            Snailfish::Pair(left, right) => {
-                if let Explosion::Boom(a, b) = left.explode(level + 1) {
-                    if let Some(b) = b {
-                        right.add_left(b);
-                    }
-                    Explosion::Boom(a, None)
-                } else if let Explosion::Boom(a, b) = right.explode(level + 1) {
-                    if let Some(a) = a {
-                        left.add_right(a);
-                    }
-                    Explosion::Boom(None, b)
-                } else {
-                    Explosion::Fizzle
+            Snailfish::Pair(a, b) => {
+                let (left, mid_left) = a.explode(level + 1);
+                if let Some(x) = mid_left {
+                    b.add_left(x);
                 }
+                let (mid_right, right) = b.explode(level + 1);
+                if let Some(x) = mid_right {
+                    a.add_right(x);
+                }
+                (left, right)
             }
         }
     }

@@ -56,5 +56,5 @@ fn day_20(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20);
+criterion_group!(benches, day_18);
 criterion_main!(benches);
