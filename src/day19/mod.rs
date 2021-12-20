@@ -8,7 +8,7 @@ mod vector;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BeaconMap {
     unmapped_scanners: Vec<Scanner>,
-    scanner_positions:Vec<Vector>,
+    scanner_positions: Vec<Vector>,
 }
 
 impl BeaconMap {
@@ -134,7 +134,10 @@ impl FromStr for BeaconMap {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let scanners = input.split("\n\n").map(|s| s.parse().unwrap()).collect();
-        Ok(Self { unmapped_scanners: scanners, scanner_positions: Vec::new() })
+        Ok(Self {
+            unmapped_scanners: scanners,
+            scanner_positions: Vec::new(),
+        })
     }
 }
 

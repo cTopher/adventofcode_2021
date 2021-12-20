@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fmt;
 use std::fmt::Formatter;
 use std::str::FromStr;
@@ -11,36 +10,15 @@ pub struct Input {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Image {
-    pixels: HashSet<Position>,
-    negative:bool,
-    x_min: isize,
-    x_max: isize,
-    y_min: isize,
-    y_max: isize,
-}
-
-impl Image {
-    fn new(negative:bool) -> Self{
-        Self {
-            pixels: HashSet::new(),
-            negative,
-            x_min: 0,
-            x_max: 0,
-            y_min: 0,
-            y_max: 0,
-        }
-    }
+    pixels: Vec<Vec<bool>>,
+    negative: bool,
 }
 
 impl fmt::Display for Image {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for y in self.y_min..=self.y_max {
-            for x in self.x_min..=self.x_max {
-                if self.negative ^ self.pixels.contains(&Position { x, y }) {
-                    write!(f, "#")?;
-                } else {
-                    write!(f, ".")?;
-                }
+        for row in &self.pixels {
+            for pixel in row {
+                write!(f, "{}", if *pixel { '#' } else { '.' })?;
             }
             writeln!(f)?;
         }
@@ -49,64 +27,68 @@ impl fmt::Display for Image {
 }
 
 impl Image {
-    fn push(&mut self, position: Position) {
-        self.x_min = self.x_min.min(position.x);
-        self.x_max = self.x_max.max(position.x);
-        self.y_min = self.y_min.min(position.y);
-        self.y_max = self.y_max.max(position.y);
-        self.pixels.insert(position);
-    }
-
+    #[allow(clippy::cast_possible_wrap)]
     fn enhance(&self, algorithm: &[bool]) -> Self {
         let negative = algorithm[0] ^ self.negative;
-        let mut result = Self::new(negative);
-        for y in self.y_min - 1..=self.y_max + 1 {
-            for x in self.x_min - 1..=self.x_max + 1 {
-                let position = Position { x, y };
-                let binary = self.get_binary_number(position);
-                if negative ^ algorithm[binary] {
-                    result.push(position);
-                }
-            }
-        }
-        result
+        let x_max = self.pixels[0].len() as isize;
+        let y_max = self.pixels.len() as isize;
+        let pixels = (-1..=y_max)
+            .map(|y| {
+                (-1..=x_max)
+                    .map(|x| self.get_enhanced_pixel(x, y, algorithm))
+                    .collect()
+            })
+            .collect();
+        Self { pixels, negative }
     }
 
-    fn get_binary_number(&self, position: Position) -> usize {
+    fn get_enhanced_pixel(&self, x: isize, y: isize, algorithm: &[bool]) -> bool {
+        let binary = self.get_binary_number(x, y);
+        algorithm[binary]
+    }
+
+    fn get_binary_number(&self, tx: isize, ty: isize) -> usize {
         let mut result = 0;
-        for y in position.y - 1..=position.y + 1 {
-            for x in position.x - 1..=position.x + 1 {
+        for y in ty - 1..=ty + 1 {
+            for x in tx - 1..=tx + 1 {
                 result <<= 1;
-                if self.negative ^ self.pixels.contains(&Position { x, y }) {
+                if self.is_lit(x, y) {
                     result |= 1;
                 }
             }
         }
         result
     }
-}
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
-pub struct Position {
-    x: isize,
-    y: isize,
+    #[allow(clippy::cast_sign_loss)]
+    fn is_lit(&self, tx: isize, ty: isize) -> bool {
+        if tx < 0 || ty < 0 {
+            self.negative
+        } else {
+            self.pixels
+                .get(ty as usize)
+                .and_then(|row| row.get(tx as usize))
+                .copied()
+                .unwrap_or(self.negative)
+        }
+    }
+
+    fn count(&self) -> usize {
+        self.pixels.iter().flatten().filter(|&&x| x).count()
+    }
 }
 
 impl FromStr for Image {
     type Err = ();
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let mut image = Self::new(false);
-        for (y, line) in input.lines().enumerate() {
-            for (x, c) in line.chars().enumerate() {
-                if c == '#' {
-                    image.push(Position {
-                        x: x as isize,
-                        y: y as isize,
-                    });
-                }
-            }
-        }
-        Ok(image)
+        let pixels = input
+            .lines()
+            .map(|line| line.chars().map(|c| c == '#').collect())
+            .collect();
+        Ok(Self {
+            pixels,
+            negative: false,
+        })
     }
 }
 
@@ -114,15 +96,7 @@ impl FromStr for Input {
     type Err = ();
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let (algorithm, image) = input.split_once("\n\n").unwrap();
-
-        let algorithm = algorithm
-            .chars()
-            .map(|c| match c {
-                '#' => true,
-                '.' => false,
-                _ => panic!("Invalid character in input"),
-            })
-            .collect();
+        let algorithm = algorithm.chars().map(|c| c == '#').collect();
         Ok(Self {
             algorithm,
             image: image.parse().unwrap(),
@@ -131,11 +105,11 @@ impl FromStr for Input {
 }
 
 pub fn part_1(input: Input) -> usize {
-    enhance(input, 2).pixels.len()
+    enhance(input, 2).count()
 }
 
 pub fn part_2(input: Input) -> usize {
-    enhance(input, 50).pixels.len()
+    enhance(input, 50).count()
 }
 
 fn enhance(input: Input, times: usize) -> Image {
