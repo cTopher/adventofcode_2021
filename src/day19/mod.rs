@@ -1,76 +1,118 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::str::FromStr;
 
+use vector::Vector;
+
+mod vector;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Summary {
-    scanners: Vec<Scanner>,
+pub struct BeaconMap {
+    unmapped_scanners: Vec<Scanner>,
+    scanner_positions:Vec<Vector>,
+}
+
+impl BeaconMap {
+    fn solve(&mut self) -> Scanner {
+        let mut scanners: VecDeque<Scanner> = self.unmapped_scanners.drain(..).collect();
+        let mut scanner_0 = scanners.pop_front().unwrap();
+        while let Some(scanner) = scanners.pop_front() {
+            if scanner.overlap(&scanner_0) >= 66 {
+                let pos = scanner_0.merge(scanner);
+                self.scanner_positions.push(pos);
+            } else {
+                scanners.push_back(scanner);
+            }
+        }
+        scanner_0
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Scanner {
     beacons: Vec<Vector>,
-    connections: Vec<Connection>,
-    distances: HashSet<i32>,
+    distances_per_beacon: Vec<HashSet<i32>>,
+    all_distances: HashSet<i32>,
 }
 
 impl Scanner {
     fn overlap(&self, other: &Scanner) -> usize {
-        self.distances.intersection(&other.distances).count()
+        self.all_distances
+            .intersection(&other.all_distances)
+            .count()
+    }
+
+    fn merge(&mut self, mut other: Scanner) -> Vector {
+        let (orientation, translation) = self.get_transformation(&other);
+        other.apply_transformation(orientation, translation);
+        for beacon in other.beacons {
+            if !self.beacons.contains(&beacon) {
+                self.beacons.push(beacon);
+            }
+        }
+        self.update();
+        translation
+    }
+
+    fn apply_transformation(&mut self, orientation: u8, translation: Vector) {
+        for beacon in &mut self.beacons {
+            *beacon = beacon.orientation(orientation) + translation;
+        }
+    }
+
+    fn get_transformation(&mut self, other: &Scanner) -> (u8, Vector) {
+        let overlap: Vec<(Vector, Vector)> = (0..self.beacons.len())
+            .flat_map(|i| (0..other.beacons.len()).map(move |j| (i, j)))
+            .filter(|&(i, j)| {
+                self.distances_per_beacon[i]
+                    .intersection(&other.distances_per_beacon[j])
+                    .count()
+                    >= 11
+            })
+            .map(|(i, j)| (self.beacons[i], other.beacons[j]))
+            .collect();
+        println!("overlap len = {:?}", overlap.len());
+        for orientation in 0..24 {
+            let delta0 = overlap[0].1.orientation(orientation) - overlap[0].0;
+            let delta1 = overlap[1].1.orientation(orientation) - overlap[1].0;
+            let delta2 = overlap[2].1.orientation(orientation) - overlap[2].0;
+            if delta0 == delta1 && delta1 == delta2 {
+                println!("delta = {}", delta0);
+                return (orientation, -delta0);
+            }
+        }
+        panic!("no orientation found");
+    }
+
+    fn update(&mut self) {
+        self.distances_per_beacon = self
+            .beacons
+            .iter()
+            .map(|&a| {
+                self.beacons
+                    .iter()
+                    .map(|&b| a.distance(b))
+                    .filter(|&d| d != 0)
+                    .collect()
+            })
+            .collect();
+        self.all_distances = self
+            .distances_per_beacon
+            .iter()
+            .flatten()
+            .copied()
+            .collect();
     }
 }
 
 impl From<Vec<Vector>> for Scanner {
     fn from(beacons: Vec<Vector>) -> Self {
-        let connections: Vec<Connection> = (0..beacons.len())
-            .flat_map(|i| (i + 1..beacons.len()).map(move |j| (i, j)))
-            .map(|(i, j)| Connection::new(beacons[i], beacons[j]))
-            .collect();
-        let distances = connections.iter().map(|c| c.distance).collect();
-        Self {
+        let mut result = Self {
             beacons,
-            connections,
-            distances,
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
-pub struct Connection {
-    a: Vector,
-    b: Vector,
-    distance: i32,
-}
-
-impl Connection {
-    fn new(a: Vector, b: Vector) -> Self {
-        let distance = a.distance(b);
-        Connection { a, b, distance }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
-struct Vector {
-    x: i32,
-    y: i32,
-    z: i32,
-}
-
-impl Vector {
-    fn distance(&self, other: Vector) -> i32 {
-        (self.x - other.x).pow(2) + (self.y - other.y).pow(2) + (self.z - other.z).pow(2)
-    }
-}
-
-impl FromStr for Vector {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let mut numbers = input.splitn(3, ',').map(|s| s.parse::<i32>().unwrap());
-        let x = numbers.next().unwrap();
-        let y = numbers.next().unwrap();
-        let z = numbers.next().unwrap();
-        assert_eq!(numbers.next(), None);
-        Ok(Self { x, y, z })
+            distances_per_beacon: Vec::new(),
+            all_distances: HashSet::new(),
+        };
+        result.update();
+        result
     }
 }
 
@@ -87,28 +129,37 @@ impl FromStr for Scanner {
     }
 }
 
-impl FromStr for Summary {
+impl FromStr for BeaconMap {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let scanners = input.split("\n\n").map(|s| s.parse().unwrap()).collect();
-        Ok(Self { scanners })
+        Ok(Self { unmapped_scanners: scanners, scanner_positions: Vec::new() })
     }
 }
 
-pub fn part_1(summary: Summary) -> usize {
-    let scanner0 = &summary.scanners[0];
+pub fn part_1(mut summary: BeaconMap) -> usize {
+    let scanner = summary.solve();
+    scanner.beacons.len()
+}
 
-    for i in 0..summary.scanners.len() {
-        println!("{} {}", i, summary.scanners[i].overlap(scanner0));
+pub fn part_2(mut summary: BeaconMap) -> i32 {
+    summary.solve();
+    let mut max = 0;
+    for &a in &summary.scanner_positions {
+        for &b in &summary.scanner_positions {
+            let dist = a.manhattan_distance(b);
+            if dist > max {
+                max = dist;
+            }
+        }
     }
-
-    0
+    max
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse_file, parse_file_lines, parse_str_lines};
+    use crate::parse_file;
 
     use super::*;
 
@@ -121,6 +172,18 @@ mod tests {
     #[test]
     fn part_1_works() {
         let summary = parse_file("src/day19/input.txt");
-        assert_eq!(79, part_1(summary));
+        assert_eq!(323, part_1(summary));
+    }
+
+    #[test]
+    fn example_2_produces_3621() {
+        let summary = parse_file("src/day19/example.txt");
+        assert_eq!(3621, part_2(summary));
+    }
+
+    #[test]
+    fn part_2_works() {
+        let summary = parse_file("src/day19/input.txt");
+        assert_eq!(0, part_2(summary));
     }
 }
