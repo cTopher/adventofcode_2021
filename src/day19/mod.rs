@@ -60,7 +60,7 @@ impl Scanner {
     }
 
     fn get_transformation(&mut self, other: &Self) -> (u8, Vector) {
-        let overlap: Vec<(Vector, Vector)> = (0..self.beacons.len())
+        let common: Vec<(Vector, Vector)> = (0..self.beacons.len())
             .flat_map(|i| (0..other.beacons.len()).map(move |j| (i, j)))
             .filter(|&(i, j)| {
                 self.distances_per_beacon[i]
@@ -69,14 +69,12 @@ impl Scanner {
                     >= 11
             })
             .map(|(i, j)| (self.beacons[i], other.beacons[j]))
+            .take(2)
             .collect();
-        println!("overlap len = {:?}", overlap.len());
         for orientation in 0..24 {
-            let delta0 = overlap[0].1.orientation(orientation) - overlap[0].0;
-            let delta1 = overlap[1].1.orientation(orientation) - overlap[1].0;
-            let delta2 = overlap[2].1.orientation(orientation) - overlap[2].0;
-            if delta0 == delta1 && delta1 == delta2 {
-                println!("delta = {}", delta0);
+            let delta0 = common[0].1.orientation(orientation) - common[0].0;
+            let delta1 = common[1].1.orientation(orientation) - common[1].0;
+            if delta0 == delta1 {
                 return (orientation, -delta0);
             }
         }
@@ -90,7 +88,7 @@ impl Scanner {
             .map(|&a| {
                 self.beacons
                     .iter()
-                    .map(|&b| a.distance(b))
+                    .map(|&b| a.square_distance(b))
                     .filter(|&d| d != 0)
                     .collect()
             })
@@ -141,23 +139,22 @@ impl FromStr for BeaconMap {
     }
 }
 
-pub fn part_1(mut summary: BeaconMap) -> usize {
-    let scanner = summary.solve();
+pub fn part_1(mut map: BeaconMap) -> usize {
+    let scanner = map.solve();
     scanner.beacons.len()
 }
 
-pub fn part_2(mut summary: BeaconMap) -> i32 {
-    summary.solve();
-    let mut max = 0;
-    for &a in &summary.scanner_positions {
-        for &b in &summary.scanner_positions {
-            let dist = a.manhattan_distance(b);
-            if dist > max {
-                max = dist;
-            }
-        }
-    }
-    max
+pub fn part_2(mut map: BeaconMap) -> i32 {
+    map.solve();
+    map.scanner_positions
+        .iter()
+        .flat_map(|a| {
+            map.scanner_positions
+                .iter()
+                .map(|&b| a.manhattan_distance(b))
+        })
+        .max()
+        .unwrap()
 }
 
 #[cfg(test)]

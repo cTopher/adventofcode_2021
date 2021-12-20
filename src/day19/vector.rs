@@ -56,11 +56,11 @@ impl Vector {
         Self { x, y, z }
     }
 
-    pub const fn distance(&self, other: Self) -> i32 {
+    pub const fn square_distance(self, other: Self) -> i32 {
         (self.x - other.x).pow(2) + (self.y - other.y).pow(2) + (self.z - other.z).pow(2)
     }
 
-    pub const fn manhattan_distance(&self, other: Self) -> i32 {
+    pub const fn manhattan_distance(self, other: Self) -> i32 {
         (self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs()
     }
 

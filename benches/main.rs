@@ -1,4 +1,4 @@
-use adventofcode_2021::{day06, day11, day12, day15, day17, day20, parse_file};
+use adventofcode_2021::{day06, day11, day12, day15, day17, day18, day19, day20, parse_file, parse_file_lines};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn day_6(c: &mut Criterion) {
@@ -36,6 +36,19 @@ fn day_17(c: &mut Criterion) {
     });
 }
 
+fn day_18(c: &mut Criterion) {
+    c.bench_function("day 18", |b| {
+        b.iter(|| day18::part_2(black_box(parse_file_lines("src/day18/input.txt"))));
+    });
+}
+
+fn day_19(c: &mut Criterion) {
+    let input: day19::BeaconMap = parse_file("src/day19/input.txt");
+    c.bench_function("day 19", |b| {
+        b.iter(|| day19::part_2(black_box(input.clone())));
+    });
+}
+
 fn day_20(c: &mut Criterion) {
     let input: day20::Input = parse_file("src/day20/input.txt");
     c.bench_function("day 20", |b| {
@@ -43,5 +56,5 @@ fn day_20(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_6, day_11, day_12, day_15, day_17, day_20);
+criterion_group!(benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20);
 criterion_main!(benches);
