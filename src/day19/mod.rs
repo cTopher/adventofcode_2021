@@ -184,6 +184,6 @@ mod tests {
     #[test]
     fn part_2_works() {
         let summary = parse_file("src/day19/input.txt");
-        assert_eq!(0, part_2(summary));
+        assert_eq!(10685, part_2(summary));
     }
 }
