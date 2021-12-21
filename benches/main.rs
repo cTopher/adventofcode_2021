@@ -1,4 +1,6 @@
-use adventofcode_2021::{day06, day11, day12, day15, day17, day18, day19, day20, parse_file, parse_file_lines};
+use adventofcode_2021::{
+    day06, day11, day12, day15, day17, day18, day19, day20, parse_file, parse_file_lines,
+};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn day_6(c: &mut Criterion) {
@@ -56,5 +58,5 @@ fn day_20(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_18);
+criterion_group!(benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20);
 criterion_main!(benches);
