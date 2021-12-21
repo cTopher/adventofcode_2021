@@ -1,5 +1,4 @@
 use std::cmp::{max, min, Ordering};
-use std::collections::BTreeMap;
 use std::str::FromStr;
 
 #[derive(Clone, Debug, Eq, PartialEq, Copy)]
@@ -13,6 +12,42 @@ pub struct Game {
 struct Player {
     score: usize,
     position: usize,
+}
+
+impl From<Game> for usize {
+    /// assumes scores < 21 (this would not work for part 1)
+    fn from(game: Game) -> Self {
+        let result = game.player_1.score;
+        let result = result * 21 + game.player_2.score;
+        let result = result * 11 + game.player_1.position;
+        let result = result * 11 + game.player_2.position;
+        result * 2 + game.turn as Self
+    }
+}
+
+impl From<usize> for Game {
+    fn from(input: usize) -> Self {
+        let turn = input % 2 == 1;
+        let input = input / 2;
+        let player_2_position = input % 11;
+        let input = input / 11;
+        let player_1_position = input % 11;
+        let input = input / 11;
+        let player_2_score = input % 21;
+        let input = input / 21;
+        let player_1_score = input;
+        Self {
+            player_1: Player {
+                score: player_1_score,
+                position: player_1_position,
+            },
+            player_2: Player {
+                score: player_2_score,
+                position: player_2_position,
+            },
+            turn,
+        }
+    }
 }
 
 const TRIPLE_QUANTUM: [(usize, u64); 7] = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
@@ -137,21 +172,17 @@ impl PartialOrd for Game {
     }
 }
 
-fn pop_first(games: &mut BTreeMap<Game, u64>) -> Option<(Game, u64)> {
-    if let Some(&game) = games.keys().next() {
-        let count = games.remove(&game).unwrap();
-        Some((game, count))
-    } else {
-        None
-    }
-}
-
 pub fn part_2(game: Game) -> u64 {
-    let mut games: BTreeMap<Game, u64> = BTreeMap::new();
-    games.insert(game, 1);
+    let mut games: Vec<u64> = vec![0; 21 * 21 * 11 * 11 * 2];
+    games[usize::from(game)] = 1;
     let mut p1_wins = 0;
     let mut p2_wins = 0;
-    while let Some((game, count)) = pop_first(&mut games) {
+    for index in 0..games.len() {
+        let count = games[index];
+        if count == 0 {
+            continue;
+        }
+        let game = Game::from(index);
         for (game, universes) in game.take_quantum_turn() {
             let universes = count * universes;
             if game.player_1.score >= 21 {
@@ -159,7 +190,7 @@ pub fn part_2(game: Game) -> u64 {
             } else if game.player_2.score >= 21 {
                 p2_wins += universes;
             } else {
-                *games.entry(game).or_insert(0) += universes;
+                games[usize::from(game)] += universes;
             }
         }
     }
