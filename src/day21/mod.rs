@@ -174,10 +174,11 @@ impl PartialOrd for Game {
 
 pub fn part_2(game: Game) -> u64 {
     let mut games: Vec<u64> = vec![0; 21 * 21 * 11 * 11 * 2];
-    games[usize::from(game)] = 1;
+    let init = usize::from(game);
+    games[init] = 1;
     let mut p1_wins = 0;
     let mut p2_wins = 0;
-    for index in 0..games.len() {
+    for index in init..games.len() {
         let count = games[index];
         if count == 0 {
             continue;
