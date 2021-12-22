@@ -1,4 +1,4 @@
-use std::cmp::{max, min, Ordering};
+use std::cmp::{max, min};
 use std::str::FromStr;
 
 #[derive(Clone, Debug, Eq, PartialEq, Copy)]
@@ -152,24 +152,6 @@ pub fn part_1(game: &mut Game) -> usize {
     let mut dice = DeterministicDice::new();
     game.play_practice(&mut dice);
     min(game.player_1.score, game.player_2.score) * dice.rolls
-}
-
-impl Ord for Game {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let a = self.player_1.score + self.player_2.score;
-        let b = other.player_1.score + other.player_2.score;
-        a.cmp(&b)
-            .then_with(|| self.player_1.score.cmp(&other.player_1.score))
-            .then_with(|| self.player_1.position.cmp(&other.player_1.position))
-            .then_with(|| self.player_2.position.cmp(&other.player_2.position))
-            .then_with(|| self.turn.cmp(&other.turn))
-    }
-}
-
-impl PartialOrd for Game {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
 }
 
 pub fn part_2(game: Game) -> u64 {
