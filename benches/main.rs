@@ -1,5 +1,6 @@
 use adventofcode_2021::{
-    day06, day11, day12, day15, day17, day18, day19, day20, day21, parse_file, parse_file_lines,
+    day06, day11, day12, day15, day17, day18, day19, day20, day21, day22, parse_file,
+    parse_file_lines,
 };
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
@@ -65,5 +66,13 @@ fn day_21(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20, day_21);
+fn day_22(c: &mut Criterion) {
+    c.bench_function("day 22", |b| {
+        b.iter(|| day22::part_2(black_box(parse_file_lines("src/day22/input.txt"))));
+    });
+}
+
+criterion_group!(
+    benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20, day_21, day_22
+);
 criterion_main!(benches);
