@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use std::fmt::{Formatter, Write};
 use std::str::FromStr;
 use std::{fmt, mem};
-use std::collections::BinaryHeap;
 
 type Hall = [Option<Amphipod>; 11];
 type Room = [Option<Amphipod>; 2];
@@ -89,11 +89,18 @@ fn hall_entrance_for_room(room: usize) -> usize {
 }
 
 impl Burrow {
+    //TODO merge move_room_to_room_states and move_room_to_hall_states
     fn new_states(&self) -> impl Iterator<Item = Self> + '_ {
+        // println!("FROM");
+        // println!("{}", self);
+        // println!("TO");
+        // let e = self.energy_spent;
         self.move_room_to_room_states()
             .chain(self.move_hall_to_room_states())
             .chain(self.move_room_to_hall_states())
             .map(|mut burrow| {
+                // println!("{}", burrow.energy_spent - e);
+                // println!("{}", burrow);
                 burrow.update_min_total_energy();
                 burrow
             })
@@ -114,29 +121,25 @@ impl Burrow {
         (0..4)
             .filter_map(|room_index| self.move_out_of_room(room_index))
             .flat_map(|(burrow, hall_position)| {
-                println!("hall pos: {}", hall_position);
-                println!("{}", burrow);
-                VALID_HALL_POSITIONS.iter().map(move |&target| {
+                VALID_HALL_POSITIONS.iter().filter_map(move |&target| {
                     let mut burrow = burrow;
-                    burrow.hallway_is_clear(target, hall_position);
+                    if !burrow.hallway_is_clear(target, hall_position) {
+                        return None;
+                    }
                     let amiphod = mem::take(&mut burrow.hall[hall_position]);
-                    println!("{:?}", amiphod);
                     burrow.hall[target] = amiphod;
-                    burrow.energy_spent +=
-                        (1 + delta(hall_position, target)) * amiphod.unwrap().energy();
-                    burrow
+                    burrow.energy_spent += delta(hall_position, target) * amiphod.unwrap().energy();
+                    Some(burrow)
                 })
             })
     }
 
     fn move_out_of_room(mut self, room_index: usize) -> Option<(Self, usize)> {
-        println!("move_out_of_room: {}", room_index);
-        println!("{}", self);
         let hall_index = hall_entrance_for_room(room_index);
         let room = &mut self.rooms[room_index];
         let amiphod = match (room[0], room[1]) {
             (Some(amiphod), _) => {
-                if amiphod.target_room() == room_index && room[1] == Some(amiphod){
+                if amiphod.target_room() == room_index && room[1] == Some(amiphod) {
                     return None;
                 }
                 room[0] = None;
@@ -154,9 +157,6 @@ impl Burrow {
         };
         self.hall[hall_index] = Some(amiphod);
         self.energy_spent += amiphod.energy();
-        println!("{}", self);
-        println!();
-        println!();
         Some((self, hall_index))
     }
 
@@ -199,7 +199,8 @@ impl Burrow {
         }
         for (position, amphipod) in self.hall.iter().enumerate() {
             if let Some(amphipod) = amphipod {
-                self.min_total_energy += amphipod.energy_from_hall(position);
+                let i = amphipod.energy_from_hall(position);
+                self.min_total_energy += i;
             }
         }
         for amphipod in AMPHIPODS {
@@ -212,7 +213,10 @@ impl Burrow {
 
 impl Ord for Burrow {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.min_total_energy.cmp(&other.min_total_energy)
+        other
+            .min_total_energy
+            .cmp(&self.min_total_energy)
+            .then_with(|| other.energy_spent.cmp(&self.energy_spent))
     }
 }
 
@@ -244,29 +248,29 @@ impl fmt::Display for Amphipod {
 impl fmt::Display for Burrow {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         // above hall
-        writeln!(f,"#############")?;
+        writeln!(f, "#############")?;
         // hall
         f.write_char('#')?;
         for amphipod in self.hall {
-           fmt_amiphod( amphipod, f)?;
+            fmt_amiphod(amphipod, f)?;
         }
-        writeln!(f,"#")?;
+        writeln!(f, "#")?;
         // room_top
         write!(f, "###")?;
         for room in self.rooms {
-            fmt_amiphod( room[0], f)?;
+            fmt_amiphod(room[0], f)?;
             f.write_char('#')?;
         }
-        writeln!(f,"##")?;
+        writeln!(f, "##")?;
         // room_bottom
         write!(f, "  #")?;
         for room in self.rooms {
-            fmt_amiphod( room[1], f)?;
+            fmt_amiphod(room[1], f)?;
             f.write_char('#')?;
         }
         writeln!(f)?;
         // below room
-        writeln!(f,"  #########")
+        writeln!(f, "  #########")
     }
 }
 
@@ -294,7 +298,15 @@ impl FromStr for Burrow {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let mut lines = input.lines().skip(2);
+        let mut lines = input.lines().skip(1);
+        let hall: Vec<_> = lines
+            .next()
+            .unwrap()
+            .chars()
+            .skip(1)
+            .take(11)
+            .map(Amphipod::optional_from)
+            .collect();
         let first: Vec<char> = lines.next().unwrap().chars().collect();
         let second: Vec<char> = lines.next().unwrap().chars().collect();
         let room = |index: usize| -> Room {
@@ -307,7 +319,8 @@ impl FromStr for Burrow {
         let mut burrow = Self {
             rooms: [room(0), room(1), room(2), room(3)],
             hall: [
-                None, None, None, None, None, None, None, None, None, None, None,
+                hall[0], hall[1], hall[2], hall[3], hall[4], hall[5], hall[6], hall[7], hall[8],
+                hall[9], hall[10],
             ],
             energy_spent: 0,
             min_total_energy: 0,
@@ -336,15 +349,30 @@ mod tests {
     use super::*;
 
     #[test]
+    fn xxx() {
+        let burrow: Burrow = "\
+#############
+#.....D.D...#
+###.#B#C#.###
+  #A#B#C#A#
+  #########"
+            .parse()
+            .unwrap();
+        println!("{}", burrow.min_total_energy);
+        // 7011
+        println!("{}", part_1(burrow));
+    }
+
+    #[test]
     fn example_1_produces_12521() {
-        let burrow:Burrow = EXAMPLE.parse().unwrap();
+        let burrow: Burrow = EXAMPLE.parse().unwrap();
         assert_eq!(12521, part_1(burrow));
     }
 
     #[test]
     fn part_1_works() {
         let burrow = parse_file("src/day23/input.txt");
-        assert_eq!(0, part_1(burrow));
+        assert_eq!(14460, part_1(burrow));
     }
 
     const EXAMPLE: &str = "\
