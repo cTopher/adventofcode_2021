@@ -5,12 +5,12 @@ use std::str::FromStr;
 use std::{fmt, mem};
 
 type Hall = [Option<Amphipod>; 11];
-type Room = [Option<Amphipod>; 2];
+type Room<const SIZE: usize> = [Option<Amphipod>; SIZE];
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
-pub struct Burrow {
+pub struct Burrow <const ROOM_SIZE: usize> {
     hall: Hall,
-    rooms: [Room; 4],
+    rooms: [Room<ROOM_SIZE>; 4],
     energy_spent: usize,
     min_total_energy: usize,
 }
@@ -53,7 +53,7 @@ impl Amphipod {
         hall_entrance_for_room(self.target_room())
     }
 
-    fn can_enter(self, room: Room) -> bool {
+    fn can_enter<const ROOM_SIZE: usize>(self, room: &Room<ROOM_SIZE>) -> bool {
         room[0].is_none()
             && match room[1] {
                 None => true,
@@ -88,7 +88,7 @@ fn hall_entrance_for_room(room: usize) -> usize {
     (room + 1) * 2
 }
 
-impl Burrow {
+impl <const ROOM_SIZE: usize> Burrow<ROOM_SIZE> {
     //TODO merge move_room_to_room_states and move_room_to_hall_states
     fn new_states(&self) -> impl Iterator<Item = Self> + '_ {
         // println!("FROM");
@@ -166,7 +166,7 @@ impl Burrow {
         if !self.hallway_is_clear(target_room_entrance, hall_position) {
             return None;
         }
-        if !amiphod.can_enter(self.rooms[amiphod.target_room()]) {
+        if !amiphod.can_enter(&self.rooms[amiphod.target_room()]) {
             return None;
         }
         self.energy_spent += amiphod.energy_from_hall(hall_position);
@@ -211,7 +211,7 @@ impl Burrow {
     }
 }
 
-impl Ord for Burrow {
+impl <const ROOM_SIZE: usize> Ord for Burrow<ROOM_SIZE> {
     fn cmp(&self, other: &Self) -> Ordering {
         other
             .min_total_energy
@@ -220,7 +220,7 @@ impl Ord for Burrow {
     }
 }
 
-impl PartialOrd for Burrow {
+impl <const ROOM_SIZE: usize> PartialOrd for Burrow<ROOM_SIZE> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -245,7 +245,7 @@ impl fmt::Display for Amphipod {
     }
 }
 
-impl fmt::Display for Burrow {
+impl <const ROOM_SIZE: usize> fmt::Display for Burrow<ROOM_SIZE> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         // above hall
         writeln!(f, "#############")?;
@@ -294,7 +294,7 @@ impl From<char> for Amphipod {
     }
 }
 
-impl FromStr for Burrow {
+impl FromStr for Burrow<2> {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
@@ -309,7 +309,7 @@ impl FromStr for Burrow {
             .collect();
         let first: Vec<char> = lines.next().unwrap().chars().collect();
         let second: Vec<char> = lines.next().unwrap().chars().collect();
-        let room = |index: usize| -> Room {
+        let room = |index: usize| -> Room<2> {
             let index = index * 2 + 3;
             [
                 Amphipod::optional_from(first[index]),
@@ -330,7 +330,7 @@ impl FromStr for Burrow {
     }
 }
 
-pub fn part_1(burrow: Burrow) -> usize {
+pub fn part_1<const ROOM_SIZE: usize>(burrow: Burrow<ROOM_SIZE>) -> usize {
     let mut heap = BinaryHeap::new();
     heap.push(burrow);
     while let Some(burrow) = heap.pop() {
@@ -348,24 +348,24 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn xxx() {
-        let burrow: Burrow = "\
-#############
-#.....D.D...#
-###.#B#C#.###
-  #A#B#C#A#
-  #########"
-            .parse()
-            .unwrap();
-        println!("{}", burrow.min_total_energy);
-        // 7011
-        println!("{}", part_1(burrow));
-    }
+//     #[test]
+//     fn xxx() {
+//         let burrow: Burrow = "\
+// #############
+// #.....D.D...#
+// ###.#B#C#.###
+//   #A#B#C#A#
+//   #########"
+//             .parse()
+//             .unwrap();
+//         println!("{}", burrow.min_total_energy);
+//         // 7011
+//         println!("{}", part_1(burrow));
+//     }
 
     #[test]
     fn example_1_produces_12521() {
-        let burrow: Burrow = EXAMPLE.parse().unwrap();
+        let burrow = EXAMPLE.parse().unwrap();
         assert_eq!(12521, part_1(burrow));
     }
 
