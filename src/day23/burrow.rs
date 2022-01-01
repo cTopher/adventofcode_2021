@@ -1,8 +1,10 @@
-use super::{Amphipod, AmphipodType, Path};
-use crate::day23::position::{hall_entrance_for_room, Position};
 use std::fmt;
 use std::fmt::{Formatter, Write};
 use std::str::FromStr;
+
+use crate::day23::position::{hall_entrance_for_room, Position};
+
+use super::{Amphipod, AmphipodType, Path};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Copy, PartialOrd, Ord)]
 pub struct Hallway([Option<AmphipodType>; 11]);
@@ -248,20 +250,22 @@ impl<const ROOM_SIZE: usize> fmt::Display for Burrow<ROOM_SIZE> {
             fmt_amiphod(amphipod, f)?;
         }
         writeln!(f, "#")?;
-        // room_top
-        write!(f, "###")?;
-        for room in self.rooms {
-            fmt_amiphod(room[0], f)?;
-            f.write_char('#')?;
+        // rooms
+        for spot in 0..ROOM_SIZE {
+            if spot == 0 {
+                write!(f, "###")?;
+            } else {
+                write!(f, "  #")?;
+            }
+            for room in &self.rooms {
+                fmt_amiphod(room[spot], f)?;
+                write!(f, "#")?;
+            }
+            if spot == 0 {
+                write!(f, "##")?;
+            }
+            writeln!(f)?;
         }
-        writeln!(f, "##")?;
-        // room_bottom
-        write!(f, "  #")?;
-        for room in self.rooms {
-            fmt_amiphod(room[1], f)?;
-            f.write_char('#')?;
-        }
-        writeln!(f)?;
         // below room
         writeln!(f, "  #########")
     }

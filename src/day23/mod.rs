@@ -75,9 +75,39 @@ pub fn part_1<const ROOM_SIZE: usize>(burrow: Burrow<ROOM_SIZE>) -> usize {
     panic!("No solution!")
 }
 
-// pub fn part_2(burrow: Burrow<2>) -> usize {
-//
-// }
+pub fn part_2(burrow: Burrow<2>) -> usize {
+    let rooms = burrow.rooms;
+    let unfolded_burrow: Burrow<4> = Burrow {
+        hall: burrow.hall,
+        rooms: [
+            [
+                rooms[0][0],
+                Some(AmphipodType::Desert),
+                Some(AmphipodType::Desert),
+                rooms[0][1],
+            ],
+            [
+                rooms[1][0],
+                Some(AmphipodType::Copper),
+                Some(AmphipodType::Bronze),
+                rooms[1][1],
+            ],
+            [
+                rooms[2][0],
+                Some(AmphipodType::Bronze),
+                Some(AmphipodType::Amber),
+                rooms[2][1],
+            ],
+            [
+                rooms[3][0],
+                Some(AmphipodType::Amber),
+                Some(AmphipodType::Copper),
+                rooms[3][1],
+            ],
+        ],
+    };
+    part_1(unfolded_burrow)
+}
 
 #[cfg(test)]
 mod tests {
@@ -95,6 +125,18 @@ mod tests {
     fn part_1_works() {
         let burrow = parse_file("src/day23/input.txt");
         assert_eq!(14460, part_1(burrow));
+    }
+
+    // #[test]
+    // fn example_2_produces_44169() {
+    //     let burrow = EXAMPLE.parse().unwrap();
+    //     assert_eq!(44169, part_2(burrow));
+    // }
+
+    #[test]
+    fn part_2_works() {
+        let burrow = parse_file("src/day23/input.txt");
+        assert_eq!(41366, part_2(burrow));
     }
 
     const EXAMPLE: &str = "\
