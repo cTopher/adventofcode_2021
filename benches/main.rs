@@ -1,5 +1,5 @@
 use adventofcode_2021::{
-    day06, day11, day12, day15, day17, day18, day19, day20, day21, day22, parse_file,
+    day06, day11, day12, day15, day17, day18, day19, day20, day21, day22, day23, parse_file,
     parse_file_lines,
 };
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -72,7 +72,14 @@ fn day_22(c: &mut Criterion) {
     });
 }
 
+fn day_23(c: &mut Criterion) {
+    let burrow: day23::Burrow<2> = parse_file("src/day23/input.txt");
+    c.bench_function("day 21", |b| {
+        b.iter(|| day23::part_2(black_box(burrow)));
+    });
+}
+
 criterion_group!(
-    benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20, day_21, day_22
+    benches, day_6, day_11, day_12, day_15, day_17, day_18, day_19, day_20, day_21, day_22, day_23
 );
 criterion_main!(benches);

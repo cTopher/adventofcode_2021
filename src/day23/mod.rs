@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashSet};
 
 use amphipod::{Amphipod, AmphipodType, Path};
-use burrow::Burrow;
+pub use burrow::Burrow;
 use position::Position;
 
 mod amphipod;
@@ -63,14 +63,17 @@ impl<const ROOM_SIZE: usize> PartialOrd for BurrowState<ROOM_SIZE> {
 }
 
 pub fn part_1<const ROOM_SIZE: usize>(burrow: Burrow<ROOM_SIZE>) -> usize {
+    let mut visited = HashSet::new();
     let mut heap = BinaryHeap::new();
     heap.push(BurrowState::new(burrow));
     while let Some(mut state) = heap.pop() {
-        state.improve();
-        if state.energy_spent == state.min_total_energy {
-            return state.energy_spent;
+        if visited.insert(state.burrow) {
+            state.improve();
+            if state.energy_spent == state.min_total_energy {
+                return state.energy_spent;
+            }
+            heap.extend(state.new_states());
         }
-        heap.extend(state.new_states());
     }
     panic!("No solution!")
 }
@@ -127,11 +130,11 @@ mod tests {
         assert_eq!(14460, part_1(burrow));
     }
 
-    // #[test]
-    // fn example_2_produces_44169() {
-    //     let burrow = EXAMPLE.parse().unwrap();
-    //     assert_eq!(44169, part_2(burrow));
-    // }
+    #[test]
+    fn example_2_produces_44169() {
+        let burrow = EXAMPLE.parse().unwrap();
+        assert_eq!(44169, part_2(burrow));
+    }
 
     #[test]
     fn part_2_works() {
